@@ -42,7 +42,7 @@ end
 
 
 -- Return previous, current and upcoming rng values
-function w.rngTable(seedPtr,size,current)
+function w.rngTable(seedPtr,maxLines,current)
 
   local current = current or 2                            -- the position of the current seed in the array
   local newRNG = seedPtr[0]
@@ -54,13 +54,13 @@ function w.rngTable(seedPtr,size,current)
     -- mismatch (a loaded save more likely)
     local mismatch = newRNG ~= w.RNGs[current+1]
 
-    for i=1, size do
+    for i=1, maxLines do
     
       if i < current and (mismatch or newRNG == 0)      -- When no seed has yet been calculated or a mismatch
         then w.RNGs[i] = 0
       elseif i == current
         then w.RNGs[i] = newRNG
-      elseif i == size or mismatch                      -- new seeds when there is a mismatch or it's the last one
+      elseif i == maxLines or mismatch                      -- new seeds when there is a mismatch or it's the last one
         then w.RNGs[i] = nextRNG( w.RNGs[i-1] )
       else                                              -- otherwise it's the following one
         w.RNGs[i] = w.RNGs[i+1]
@@ -352,22 +352,37 @@ bit.extract = function(x, n, w)
   return bit.rshift(bit.band(x, bit.lshift(1, w) - 1), n)
 end
 
-local getOpcode = function(code) return bit.extract(code, 26, 6) end  --bit.rshift(value , 26)
+bit.extract2 = function(x, n, w)
+  return bit.band(bit.rshift(x, n), bit.lshift(1, w) - 1)
+end
 
 --J-Type
-local getRt     = function(code) return bit.extract(code, 0, 26) end
+w.getOpcodeJ = function(code) return bit.extract(code, 26, 6) end
+w.getTarget  = function(code) return bit.extract(code, 0, 26) end
 
 --I-Type
-local getRs     = function(code) return bit.extract(code, 21, 5) end
-local getRt     = function(code) return bit.extract(code, 16, 5) end  -- bit.band( bit.rshift(value , 16), 0x1f )
-local getImm    = function(code) return bit.extract(code, 0, 16) end
+w.getOpcodeI = function(code) return bit.extract(code, 0, 6) end
+w.getRs      = function(code) return bit.extract(code, 6, 5) end
+w.getRt      = function(code) return bit.extract(code, 11, 5) end  -- opcode (bltz, bgez, bltzal, bgezal)
+w.getImm     = function(code) return bit.extract(code, 16, 16) end
 
 --R-Type
-local getRs1    = function(code) return bit.extract(code, 20,5) end
-local getRs2    = function(code) return bit.extract(code, 15,5) end
-local getRd     = function(code) return bit.extract(code, 10,5) end
-local getZero   = function(code) return bit.extract(code, 5, 5) end
-local getFunc   = function(code) return bit.extract(code, 0, 5) end
+w.getRs      = function(code) return bit.extract(code, 6, 5) end
+w.getRt      = function(code) return bit.extract(code, 11, 5) end
+w.getRd      = function(code) return bit.extract(code, 16, 5) end
+w.getShamt   = function(code) return bit.extract(code, 21, 5) end
+w.getOpcodeR = function(code) return bit.extract(code, 26, 5) end
+
+-- R-Type:
+-- add, addu, and, div, divu, jalr, jr, mfhi, mflo, mthi, mtlo, mult, multu, nor, or, sll, slt, sltu, sra, srav, srl, srlv, sub, subu, xor
+
+-- I-Type:
+-- addi, addiu, andi, beq, bgez, bgezal, bgtz, blez, bltz, bltzal, bne, lb, lbu, lh, lhu, lui, lw, ori, sb, sh, slti, sltiu, sw, xori
+
+-- J-Type:
+-- j, jal
+
+-- SYSCALL RFE SLLV BREAK LWL LWR SWL SWR
 
 
 
@@ -387,7 +402,7 @@ function w.addBpOpcode(address, width, id, condition)
       
     local pc_ptr, value = w.validateAddress(pc,'uint32_t*')
       
-    local opcode = getOpcode(value)
+    local opcode = w.getOpcodeI(value)
 
     if opcode == condition then
         pprint('opcode ' .. w.dec2hex(opcode) .. ' at ' .. w.dec2hex(address) ); PCSX.pauseEmulator(); PCSX.GUI.jumpToPC(pc)
