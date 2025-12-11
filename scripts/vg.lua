@@ -42,15 +42,12 @@ local maxMP           = 0x11FA5E
 local risk            = 0x11FA60
 local strength        = 0x11FA62
 local maxSpeed        = 0x11FA73
-local ashleySatus     = 0x120388
+local ashleyStatus    = 0x120388
 local ashleyState     = 0x1203AE
 
 local posY            = 0x1203C0 -- mirrored at 0x1fff8c (on the stack)
 local posZ            = 0x1203C2
 local posX            = 0x1203C4
-local rotationY       = 0x1203C6
-local rotationZ       = 0x1203C8
-local rotationX       = 0x1203CA
 local posXPtr         = ffi.cast('uint16_t*', mem + bit.band(posX, 0x1fffff))
 local posYPtr         = ffi.cast('uint16_t*', mem + bit.band(posY, 0x1fffff))
 local posZPtr         = ffi.cast('uint16_t*', mem + bit.band(posZ, 0x1fffff))
