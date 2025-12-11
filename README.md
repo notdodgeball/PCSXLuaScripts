@@ -3,7 +3,7 @@ A script to be used with the [PCSX-Redux emulator](https://pcsx-redux.consoledev
 
 It can display and edit values like enemies and Ashley's stats and coordinates, insert strings into memory, modify the inventory, load any room, freeze memory addresses and output text on top of the screen. It also has a custom lua memory display and saveStates manager.
 
- It needs the scripts at [PCSX-Redux emulator](https://github.com/notdodgeball/PCSX-Redux-lua-scripts) in the same folder.
+ It needs the https://github.com/notdodgeball/PCSX-Redux-lua-scripts in the same folder.
 
 ## Summary
 
