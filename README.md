@@ -51,9 +51,11 @@ Or use the command line arguments
 
 `pcsx.exe -loadiso "Vagrant Story.bin" -dofile "vg.lua" `
 
+Ensure the Lua interpreter can load the files by placing them in your working directory or in the emulator’s main folder (either directly or in a `lua` subfolder you create).
+
 ## As a module
 
-You can use this script for your own needs, just make sure to put all the files in the emulator path. Example:
+You can use this script for your own needs. Example:
 
 ```lua
 gui = require 'gui'
