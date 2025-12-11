@@ -1,15 +1,24 @@
-# vagrant-story-lua-script
-A collection of scripts to be used with the [PCSX-Redux emulator](https://pcsx-redux.consoledev.net/) for the game Vagrant Story.
-
-It can display and edit values like enemies and Ashley's stats and coordinates, insert strings into memory, modify the inventory, load any room, freeze memory addresses and output text on top of the screen. It also has a custom lua memory display and saveStates manager.
+# PCSXLuaScripts
+A collection of scripts to be used with the [PCSX-Redux emulator](https://pcsx-redux.consoledev.net/) for the games I am working on.
 
 ## Summary
 
-__vg.lua__ is the main file and the one executed by the emulator.
-
-__map.lua__ contains the area and text encoding info for the game.
-
-__widgets.lua__ implements several support, imgui and file functions.
+__widgets.lua__ implements several support functions, file loading functions and imgui helpers:
+* drawFreezeCheck
+* drawFrozen
+* drawMemory
+* drawColorPicker
+* drawCheckbox
+* drawSlider
+* drawMemory
+* drawInputInt
+* drawDrag
+* drawRadio
+* drawJumpButton
+* drawInputText
+* drawSaveButton
+* drawLoadButton
+* drawLoadSave
 
 __gui.lua__ implements the output process, and some helpers:
 * drawRectangle
@@ -21,10 +30,18 @@ __out.lua__ is the file to replace the content of the original output.lua to ena
 
 __disassembler.lua__ contains exactly that.
 
+## Vagrant Story
+
+It can display and edit values like enemies and Ashley's stats and coordinates, insert strings into memory, modify the inventory, load any room, freeze memory addresses and output text on top of the screen. It also has a custom lua memory display and saveStates manager.
+
+__vg.lua__ is the main file and the one executed by the emulator.
+
+__map.lua__ contains the area and text encoding info for the game.
+
 Showcase video of a older version:
 [![Showcase video](https://i3.ytimg.com/vi/Wyxv00NZJdc/maxresdefault.jpg)](https://youtu.be/Wyxv00NZJdc)
 
-## Usage
+### Usage
 
 Type into the lua console:
 
@@ -36,7 +53,7 @@ Or use the command line arguments
 
 ## As a module
 
-Make sure to copy the files to the emulator path.
+You can use this script for your own needs, just make sure to put all the files in the emulator path. Example:
 
 ```lua
 gui = require 'gui'
@@ -60,3 +77,4 @@ function DrawImguiFrame()
 
 end
 ```
+
