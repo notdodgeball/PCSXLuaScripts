@@ -604,56 +604,48 @@ end
 
 local memWatch        = '80000000'
 local memWatchInt     = w.hex2num(memWatch)
-
 local size_bytes      = 0
 local size_bytes_t    = {8,16}
-
 
   -- custom memory display for better vizualization and copying
 function w.DrawMemory()
   
-  changedMen, memWatch = imgui.extra.InputText('Add address', memWatch , w.hexFlags)
-
-  if changedMen then
-    memWatchInt = w.hex2num(memWatch)
-  end
+  _, memWatch = imgui.extra.InputText('Add address', memWatch , w.hexFlags)
+  if _ then memWatchInt = w.hex2num(memWatch) end
   
   imgui.SetNextItemWidth(150)
-  
-  -- Cant't make it local because of size_bytes
-  _temp, size_bytes = imgui.Combo("##size_bytes", size_bytes, w.comboList( size_bytes_t ) )
+  _, size_bytes = imgui.Combo("##size_bytes", size_bytes, w.comboList( size_bytes_t ) )
   w.drawMemory(memWatchInt,size_bytes + 1)
   
 end
 
-
-function w.drawMemory(address, bytes, range)
+function w.drawMemory(address, size, range)
   
-  local range = range or 143
-  local bytes = bytes or 0
+  range = range or 143
+  size = size or 1
   local ct = ''
   local formato = ''
-  
-  if bytes == 1 then 
-    ct = 'uint8_t*'
-    formato = '%02X'
-  elseif bytes == 2 then
-    ct = 'uint16_t*'
-    formato = '%04X'
-  else error ("")
-  end
-  
-  local addressPtr, value, address = w.validateAddress(address,ct)
   local text = ''
   
+  if size == 1 then 
+    ct = 'uint8_t*'
+    formato = '%02X'
+  elseif size == 2 then
+    ct = 'uint16_t*'
+    formato = '%04X'
+  else error ("unsupported size")
+  end
+  
+  local addressPtr, value = w.validateAddress(address,ct)
+  
   for i=0,range,1 do
-    if math.fmod(i,16) == 0 then text = text .. '\n' .. w.dec2hex( i*(8*bytes) + address, '%08X') .. ': ' end
-    text =  text .. w.dec2hex( addressPtr[i] , formato )  .. ' ' 
+    if math.fmod(i,16) == 0 then text = text .. '\n' .. w.dec2hex( i*(size) + address, '%08X') .. ': ' end
+    text = text .. w.dec2hex( addressPtr[i] , formato ) .. ' ' 
   end
   
   -- imgui.safe.BeginListBox('Address', function()
   PCSX.GUI.useMonoFont()
-  imgui.TextUnformatted( text )
+  imgui.TextUnformatted(text)
   imgui.PopFont()
   -- end)
   
