@@ -1016,30 +1016,25 @@ function w.takeScreenShot(saveName)
   -- Convert image data to 24bpp if 16bpp (5-bit channels)
   if bpp == 0 then
 
-    local out = {}
-    local outIndex = 1
+  local out = {}
+  for i = 1, #data, 2 do
+    -- For every little-endian 2 byte pixel
+    local lo, hi = string.byte(data, i, i + 1)
+    local pixel = lo + bit.lshift(hi, 8)
 
-    for i = 1, #data, 2 do
-      -- For every little-endian 2 byte pixel
-      local lo = string.byte(data, i)
-      local hi = string.byte(data, i + 1)
-      local pixel = bit.bor(lo, bit.lshift(hi, 8))
+    -- We get the 5-bit colors
+    local r5 = bit.band(pixel, 0x1F)
+    local g5 = bit.band(bit.rshift(pixel, 5), 0x1F)
+    local b5 = bit.band(bit.rshift(pixel, 10), 0x1F)
 
-      -- We get the 5-bit colors
-      local r5 = bit.band(pixel, 0x1F)
-      local g5 = bit.band(bit.rshift(pixel, 5), 0x1F)
-      local b5 = bit.band(bit.rshift(pixel, 10), 0x1F)
+    -- And expand them to 8-bit color
+    -- string.char is required because table.concat deals with numbers by converting them 
+    -- to their decimal text representation and we have no string.pack :(
+    out[#out + 1] = string.char(expand5to8(r5), expand5to8(g5), expand5to8(b5))
+  end
 
-      -- And expand them to 8-bit color
-      -- string.char is required because table.concat deals with numbers
-      -- by converting them to their decimal text representation
-      -- and we have no string.pack :(
-      out[outIndex] = string.char(expand5to8(r5), expand5to8(g5), expand5to8(b5) )
-      outIndex = outIndex + 1
-    end
-
-    data = table.concat(out)
-
+  data = table.concat(out)
+  
   end
  
   local header = "P6\n" .. string.format("%d %d\n", width, height) .. "255\n"
