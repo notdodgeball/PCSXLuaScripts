@@ -159,7 +159,7 @@ end
   -- ffi.sizeof doesn't work with pointers because all pointers are 8 byte long in a 64 bit system 
   -- even reflect.typeof(ct).size will get it "wrong"
 
-local ptrSizeByType = {
+w.ptrSizeByType = {
  ['__int8']   = 1,   ['__int8*'] = 1
 ,['int8_t']   = 1,   ['int8_t*'] = 1
 ,['uint8_t']  = 1,  ['uint8_t*'] = 1
@@ -173,7 +173,7 @@ local ptrSizeByType = {
 ,['uint32_t'] = 4, ['uint32_t*'] = 4
 }
 
-local ptrTypeBySize = {
+w.ptrTypeBySize = {
  [1] = 'uint8_t*'
 ,[2] = 'uint16_t*'
 ,[4] = 'uint32_t*'
@@ -247,6 +247,7 @@ end
   -- main function to deal with pointers
 function w.validateAddress(address,ct)
   
+  assert( ct ~= nil , 'null ct call to validateAddress() ' .. w.dec2hex(address) )
   assert( address ~= nil , 'null address call to validateAddress() ' .. ct )
   assert( w.isValidAddress2(address) , 'address out of bounds, ' .. address )
   
@@ -550,7 +551,7 @@ function w.drawFreezeCheckbox(address, name, ct, range)
 
   -- ptrSizeByType[ct] Returns the size of ct in bytes
   if changed then
-    for i=0, range*ptrSizeByType[ct], ptrSizeByType[ct] do
+    for i=0, range*w.ptrSizeByType[ct], w.ptrSizeByType[ct] do
       if isFrozen then w.addFreeze(address+i,ct) else w.frozenAddresses[address+i] = nil end
     end
   end

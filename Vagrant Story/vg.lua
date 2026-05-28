@@ -120,7 +120,7 @@ function DrawImguiFrame()
                   if field.text then
                     w.drawInputText(curAddress, field.name, 23)
                   else
-                    w.drawInputInt(curAddress, field.name, w.ctSize_t_inv[field.size])
+                    w.drawInputInt(curAddress, field.name, field.size)
                   end
                 end -- ipairs(actorStruct)
                 
