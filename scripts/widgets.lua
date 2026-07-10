@@ -177,6 +177,9 @@ w.ptrTypeBySize = {
  [1] = 'uint8_t*'
 ,[2] = 'uint16_t*'
 ,[4] = 'uint32_t*'
+,[-1] = 'int8_t*'
+,[-2] = 'int16_t*'
+,[-4] = 'int32_t*'
 }
 
 
@@ -515,7 +518,7 @@ function w.updateFreezeEvent()
   end
 
   if w.canFreeze then
-    w.refreshFreezeValues()
+    refreshFreezeValues()
     w.eventVsyncFreeze = PCSX.Events.createEventListener('GPU::Vsync', w.doFreeze)
   else
     w.eventVsyncFreeze = nil
@@ -727,7 +730,7 @@ function w.drawCheckbox(address, name, valueOn, valueOff, isReadOnly)
 end
 
 
-function w.drawSlider(address, name, ct, min, max, range)
+function w.drawSlider(address, name, ct, min, max, range, jump)
   
   -- works nicely with min>max in cases where the logic is reversed
   -- also changes the bytes ahead, defined by range
@@ -744,10 +747,12 @@ function w.drawSlider(address, name, ct, min, max, range)
     end
   end
   
+  if jump then w.drawJumpButton(address) end
+  
 end
 
 
-function w.drawInputInt(address, name, ct, step, isReversed, width )
+function w.drawInputInt(address, name, ct, step, isReversed, width, jump)
   
   -- isReversed = true in the few cases in which the logic is reversed
   step = step or 1
@@ -761,6 +766,7 @@ function w.drawInputInt(address, name, ct, step, isReversed, width )
     if isReversed then addressPtr[0] = 2*addressPtr[0] - value else addressPtr[0] = value end
   end
   
+  if jump then w.drawJumpButton(address) end
 end
 
 

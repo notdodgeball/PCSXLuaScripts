@@ -49,8 +49,8 @@ local posY            = 0x1203C0 -- mirrored at 0x1fff8c (on the stack)
 local posZ            = 0x1203C2
 local posX            = 0x1203C4
 local posXPtr         = ffi.cast('uint16_t*', mem + bit.band(posX, 0x1fffff))
-local posYPtr         = ffi.cast('uint16_t*', mem + bit.band(posY, 0x1fffff))
 local posZPtr         = ffi.cast('uint16_t*', mem + bit.band(posZ, 0x1fffff))
+local posYPtr         = ffi.cast('uint16_t*', mem + bit.band(posY, 0x1fffff))
 local coor            = {
 'x '.. w.dec2hex(posXPtr[0]),
 'y '.. w.dec2hex(posYPtr[0]),
@@ -71,6 +71,7 @@ local charName        = 0x11FA40
 local currWeaponName  = 0x11fA7C
 local square          = PCSX.CONSTS.PAD.BUTTON.SQUARE
 local canMoonJump     = false
+local cantAttack      = 0x800dacb6
 
 -- 0x0F1928: Actor Pointers Table (List all enemies / characters currently loaded in memory) 
 -- also stored at 0x0F19FC
@@ -117,10 +118,12 @@ function DrawImguiFrame()
                   -- If last column, we start instead at the next row
                   if imgui.TableGetColumnIndex() == 1 and (field.sameline or field.text) then imgui.TableNextColumn(); end;
                   
-                  if field.text then
+                  if field.display == 'text' then
                     w.drawInputText(curAddress, field.name, 23)
+                  elseif field.display == 'slider' then
+                     w.drawSlider(curAddress, field.name, field.size, -2500, 2500, range, 1)
                   else
-                    w.drawInputInt(curAddress, field.name, field.size)
+                    w.drawInputInt(curAddress, field.name, field.size, field.step, true)
                   end
                 end -- ipairs(actorStruct)
                 
@@ -165,10 +168,11 @@ function DrawImguiFrame()
         w.drawCheckbox(mode, 'Battle Mode', 0x01, 0x00, true)
         imgui.SameLine()
         _, canMoonJump = imgui.Checkbox('Moon Jump', canMoonJump)
+        w.drawCheckbox(cantAttack, 'Enemies can\'t attack (persistent)', 0x00, 0x40)
         
         if canMoonJump then
           if PCSX.SIO0.slots[1].pads[1].getButton(square) then posZPtr[0] = posZPtr[0] - 20 end
-        end
+        end        
         
         imgui.SeparatorText('Strings')
         w.drawInputText(currWeaponName, 'Weapon\'s name', 16 )
