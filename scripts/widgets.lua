@@ -234,6 +234,27 @@ function w.isValidAddress2(n)
 end
 
 
+  -- Check if its a valid c type, if called if a integer, will return the ctype
+function w.isValidCt(ct)
+  
+  local size = 0
+  
+  if type(ct) == 'number' then
+    size = ct
+    ct = w.ptrTypeBySize[ct]
+    assert(ct, 'unsupported access size: ' .. tostring(size))
+  elseif type(ct) == 'string' then
+    size = w.ptrSizeByType[ct]
+    assert(size, ct .. ' is not a pointer type.' )
+    -- assert( reflect.typeof(ct).what == 'ptr' , ct .. ' is not a pointer type.' )
+  else 
+    error ('unsupported c type ' .. ct)
+  end
+  
+  return ct, size
+end
+    
+
 function w.isEmpty(s)
   return s == nil or s == ''
 end
@@ -252,22 +273,16 @@ function w.validateAddress(address,ct)
   
   assert( ct ~= nil , 'null ct call to validateAddress() ' .. w.dec2hex(address) )
   assert( address ~= nil , 'null address call to validateAddress() ' .. ct )
-  assert( w.isValidAddress2(address) , 'address out of bounds, ' .. address )
+  assert( w.isValidAddress2(address) , 'address out of bounds, ' .. w.dec2hex(address) )
   
-  if type(ct) == 'number' then
-    local size = ct
-    ct = w.ptrTypeBySize[size]
-    assert(ct, 'unsupported access size: ' .. tostring(size))
-  end
-  
-  assert( reflect.typeof(ct).what == 'ptr' , ct .. ' is not a pointer type.' )
+  local ct, size = w.isValidCt(ct)
   assert( not ffi.istype(ct, address) , w.dec2hex(w.backPointer(address)) .. ' already a ' .. ct .. ' pointer' )
 
   local addressPtr
   address = bit.band(address, 0x1fffff)
   addressPtr = ffi.cast(ct, mem + address)
 
-  return addressPtr, addressPtr[0], address
+  return addressPtr, addressPtr[0], address, size
 end
 
 
@@ -496,7 +511,7 @@ w.canFreeze = false
 w.frozenAddresses = {}
 
 
-  -- Does the actual freezing, used with createEventListener
+  -- Does the actual freezing, to be used with createEventListener
 function w.doFreeze()
   if w.canFreeze then 
     for k, v in pairs(w.frozenAddresses) do
@@ -506,14 +521,14 @@ function w.doFreeze()
 end
 
 
-  -- Register an listener every frame
+  -- set/unset freezing
   -- when reenabling, we must revaluate the values in case they have changed
-
-function w.updateFreezeEvent()
+  -- so we use the current values not the ones we had saved
+function w.toogleFreezeEvent()
   
   local function refreshFreezeValues()
     for k, v in pairs(w.frozenAddresses) do
-      v[2] = v[1][0]
+      v[2] = v[1][0] -- value = pointer
     end
   end
 
@@ -532,15 +547,15 @@ function w.isFrozen(address)
 end
 
 
+  -- Add an address to the frozenAddresses table, can be supplied with a custom value
 function w.addFreeze(address,ct,value)
   
-  -- Add an address to the frozenAddresses table, can be supplied with a custom value
   ct = ct or 'uint8_t*'
-  local addressPtr, cur_value, address = w.validateAddress(address,ct)
+  local addressPtr, cur_value, address, size = w.validateAddress(address,ct)
   
   if not w.frozenAddresses[address] then 
     local value = value or cur_value
-    w.frozenAddresses[address] = { addressPtr, value }
+    w.frozenAddresses[address] = { addressPtr, value, size }
   end
 end
 
@@ -552,9 +567,10 @@ function w.drawFreezeCheckbox(address, name, ct, range)
   local changed, isFrozen = imgui.Checkbox('Freeze##' .. name, isFrozen )
   if not w.canFreeze then imgui.EndDisabled() end
 
-  -- ptrSizeByType[ct] Returns the size of ct in bytes
   if changed then
-    for i=0, range*w.ptrSizeByType[ct], w.ptrSizeByType[ct] do
+    local ct, size = w.isValidCt(ct)
+    
+    for i=0, range*size, size do
       if isFrozen then w.addFreeze(address+i,ct) else w.frozenAddresses[address+i] = nil end
     end
   end
@@ -565,8 +581,8 @@ function w.drawFreezeCheckbox(address, name, ct, range)
 end
 
 
-  -- Controls the whole freezing process, w.canFreeze is exposed here
   -- draws a text field for adding addresses and a ListBox with the all frozen addresses
+  -- Controls the whole freezing process, w.canFreeze and w.toogleFreezeEvent() are exposed here
 function w.DrawFrozen()
   
   local function DrawFrozenListBox()
@@ -585,7 +601,7 @@ function w.DrawFrozen()
   -- changedBox is local and needs to be declared separately here
   local changedBox
   changedBox, w.canFreeze = imgui.Checkbox('Enable?', w.canFreeze)
-  if changedBox then w.updateFreezeEvent() end
+  if changedBox then w.toogleFreezeEvent() end
   
   imgui.SameLine()
   imgui.SetNextItemWidth(100)
@@ -730,17 +746,16 @@ function w.drawCheckbox(address, name, valueOn, valueOff, isReadOnly)
 end
 
 
-function w.drawSlider(address, name, ct, min, max, range, jump)
+function w.drawSlider(address, name, ct, min, max, range, jump, freeze)
   
   -- works nicely with min>max in cases where the logic is reversed
   -- also changes the bytes ahead, defined by range
+  ct = ct or 'uint8_t*'
   range = range or 0
   local addressPtr, value, address = w.validateAddress(address,ct)
   local changed, value = imgui.SliderInt(name, value, min, max, '%d', imgui.constant.SliderFlags.AlwaysClamp)
 
   local isfrozen = w.isFrozen(address)
-  -- imgui.SameLine(); w.drawFreezeCheckbox(address, name, ct, range)
-
   if changed and not isfrozen then
     for i=0,range,1 do
       addressPtr[i] = value
@@ -748,6 +763,7 @@ function w.drawSlider(address, name, ct, min, max, range, jump)
   end
   
   if jump then w.drawJumpButton(address) end
+  if freeze then imgui.SameLine(); w.drawFreezeCheckbox(address, name, ct, range) end
   
 end
 

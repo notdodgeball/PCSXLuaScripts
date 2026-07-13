@@ -121,7 +121,7 @@ function DrawImguiFrame()
                   if field.display == 'text' then
                     w.drawInputText(curAddress, field.name, 23)
                   elseif field.display == 'slider' then
-                     w.drawSlider(curAddress, field.name, field.size, -2500, 2500, range, 1)
+                     w.drawSlider(curAddress, field.name, field.size, -2000, 2000, 0, true, true)
                   else
                     w.drawInputInt(curAddress, field.name, field.size, field.step, true)
                   end
