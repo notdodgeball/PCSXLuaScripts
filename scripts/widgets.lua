@@ -4,9 +4,7 @@
 --========================================================
 
 d = require 'disassembler'
-
 local w = {}
-
 local mem             = PCSX.getMemPtr()
 
 
@@ -64,7 +62,7 @@ function w.rngTable(seedPtr,maxLines,current)
         then w.RNGs[i] = 0
       elseif i == current
         then w.RNGs[i] = newRNG
-      elseif i == maxLines or mismatch                      -- new seeds when there is a mismatch or it's the last one
+      elseif i == maxLines or mismatch                  -- new seeds when there is a mismatch or it's the last one
         then w.RNGs[i] = nextRNG( w.RNGs[i-1] )
       else                                              -- otherwise it's the following one
         w.RNGs[i] = w.RNGs[i+1]
@@ -234,7 +232,7 @@ function w.isValidAddress2(n)
 end
 
 
-  -- Check if its a valid c type, if called if a integer, will return the ctype
+  -- Check if its a valid c type, if called with a integer, will return the ctype
 function w.isValidCt(ct)
   
   local size = 0
@@ -306,6 +304,7 @@ function w.returnKey (t, value)
 end
 
 
+
 -- Text
 --========================================================
 
@@ -336,6 +335,7 @@ function w.decode(address,size,tbl)
   
   return text
 end
+
 
   -- Inserts string into game memory using the a text table file
 function w.insert_string(address,size,tbl,text)
@@ -494,9 +494,9 @@ function w.addBreakpointTable(bTable,width,id,bType)
 end
 
 
+  -- for adding symbols in bulk, use with parseFileAsTable()
 function w.addSymbolTable(sTable)
   
-  -- for adding symbols in bulk, use with parseFileAsTable()
   for k, v in ipairs(sTable) do
     PCSX.insertSymbol(w.hex2num(v[1]),v[2])
   end
@@ -581,7 +581,7 @@ function w.drawFreezeCheckbox(address, name, ct, range)
 end
 
 
-  -- draws a text field for adding addresses and a ListBox with the all frozen addresses
+  -- Draws a text field for adding addresses and a ListBox with the all frozen addresses
   -- Controls the whole freezing process, w.canFreeze and w.toogleFreezeEvent() are exposed here
 function w.DrawFrozen()
   
@@ -627,6 +627,7 @@ local memWatchInt     = w.hex2num(memWatch)
 local size_bytes      = 0
 local size_bytes_t    = {8,16}
 
+
   -- custom memory display for better vizualization and copying
 function w.DrawMemory()
   
@@ -638,6 +639,7 @@ function w.DrawMemory()
   w.drawMemory(memWatchInt,size_bytes + 1)
   
 end
+
 
 function w.drawMemory(address, size, range)
   
@@ -746,10 +748,9 @@ function w.drawCheckbox(address, name, valueOn, valueOff, isReadOnly)
 end
 
 
-function w.drawSlider(address, name, ct, min, max, range, jump, freeze)
-  
   -- works nicely with min>max in cases where the logic is reversed
   -- also changes the bytes ahead, defined by range
+function w.drawSlider(address, name, ct, min, max, range, jump, freeze)
   ct = ct or 'uint8_t*'
   range = range or 0
   local addressPtr, value, address = w.validateAddress(address,ct)
@@ -768,9 +769,9 @@ function w.drawSlider(address, name, ct, min, max, range, jump, freeze)
 end
 
 
+  -- isReversed = true in the few cases in which the logic is reversed
 function w.drawInputInt(address, name, ct, step, isReversed, width, jump)
   
-  -- isReversed = true in the few cases in which the logic is reversed
   step = step or 1
   width = width or 100
   imgui.SetNextItemWidth(width);
@@ -786,9 +787,9 @@ function w.drawInputInt(address, name, ct, step, isReversed, width, jump)
 end
 
 
+  -- it needs AlwaysClamp otherwise it updates the values as soon you start typing
 function w.drawDrag( address, name, ct, min, max, speed )
   
-  -- it needs AlwaysClamp otherwise it updates the values as soon you start typing
   speed = speed or 1
   local addressPtr, value = w.validateAddress(address,ct)
   local changed, value  = imgui.DragInt(name, value, speed, min, max, '%d', imgui.constant.SliderFlags.AlwaysClamp)
@@ -834,9 +835,9 @@ function w.drawJumpButton(address)
 end
 
 
+  -- Last input is used as hint, otherwise it is read from memory
 function w.drawInputText(address, name, size, width)
   
-  -- Last input is used as hint, otherwise it is read from memory
   width = width or 200
   local hint = w[address] or w.decode(address,size,text_t)
    imgui.SetNextItemWidth(width)
@@ -1031,24 +1032,24 @@ function w.takeScreenShot(saveName)
   -- Convert image data to 24bpp if 16bpp (5-bit channels)
   if bpp == 0 then
 
-  local out = {}
-  for i = 1, #data, 2 do
-    -- For every little-endian 2 byte pixel
-    local lo, hi = string.byte(data, i, i + 1)
-    local pixel = lo + bit.lshift(hi, 8)
+    local out = {}
+    for i = 1, #data, 2 do
+      -- For every little-endian 2 byte pixel
+      local lo, hi = string.byte(data, i, i + 1)
+      local pixel = lo + bit.lshift(hi, 8)
 
-    -- We get the 5-bit colors
-    local r5 = bit.band(pixel, 0x1F)
-    local g5 = bit.band(bit.rshift(pixel, 5), 0x1F)
-    local b5 = bit.band(bit.rshift(pixel, 10), 0x1F)
+      -- We get the 5-bit colors
+      local r5 = bit.band(pixel, 0x1F)
+      local g5 = bit.band(bit.rshift(pixel, 5), 0x1F)
+      local b5 = bit.band(bit.rshift(pixel, 10), 0x1F)
 
-    -- And expand them to 8-bit color
-    -- string.char is required because table.concat deals with numbers by converting them 
-    -- to their decimal text representation and we have no string.pack :(
-    out[#out + 1] = string.char(expand5to8(r5), expand5to8(g5), expand5to8(b5))
-  end
+      -- And expand them to 8-bit color
+      -- string.char is required because table.concat deals with numbers by converting them 
+      -- to their decimal text representation and we have no string.pack :(
+      out[#out + 1] = string.char(expand5to8(r5), expand5to8(g5), expand5to8(b5))
+    end
 
-  data = table.concat(out)
+    data = table.concat(out)
   
   end
  
